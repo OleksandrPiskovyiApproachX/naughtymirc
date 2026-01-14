@@ -19,5 +19,134 @@
 <body>
 
 </body>
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата з автозаповненням</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">Оплата</h2>
+
+        <!-- Контейнер автозаповнення -->
+        <div id="autofill-container" class="mb-6">
+            <p class="text-gray-700 mb-2">Можна оплатити швидко через автозаповнення Google Pay / Chrome:</p>
+            <div id="card-element-autofill" class="p-3 border border-gray-300 rounded-lg mb-3"></div>
+            <button id="submit-autofill"
+                class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">
+                Оплатити через автозаповнення
+            </button>
+        </div>
+
+        <!-- Контейнер ручного вводу (спочатку прихований) -->
+        <div id="manual-container" class="hidden">
+            <p class="text-gray-700 mb-2">Введіть дані вручну:</p>
+            <form id="manual-form" class="space-y-4">
+                <input type="text" id="card-number" placeholder="Номер картки" required
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                <div class="flex space-x-4">
+                    <input type="text" id="card-exp" placeholder="MM/YY" required
+                        class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <input type="text" id="card-cvc" placeholder="CVC" required
+                        class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <button type="submit"
+                    class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+                    Оплатити вручну
+                </button>
+            </form>
+        </div>
+
+        <div id="result" class="mt-4 text-center font-medium"></div>
+    </div>
+
+    <script>
+        const stripe = Stripe('pk_test_ТВОЙ_PUBLISHABLE_KEY'); // Замінити на свій ключ
+        const elements = stripe.elements();
+        const resultDiv = document.getElementById('result');
+
+        // Створюємо поле для автозаповнення
+        const cardAutofill = elements.create('card', { hidePostalCode: true });
+        cardAutofill.mount('#card-element-autofill');
+
+        document.getElementById('submit-autofill').addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            try {
+                const { paymentMethod, error } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardAutofill
+                });
+
+                if (error) {
+                    resultDiv.textContent = `Не вдалося використати автозаповнення: ${error.message}`;
+                    resultDiv.classList.remove('text-green-600');
+                    resultDiv.classList.add('text-red-600');
+
+                    // Показуємо форму ручного вводу тільки при помилці
+                    document.getElementById('manual-container').classList.remove('hidden');
+                    // Можна приховати автозаповнення або залишити
+                    // document.getElementById('autofill-container').classList.add('hidden');
+                } else {
+                    resultDiv.textContent = `Токен створено: ${paymentMethod.id}`;
+                    resultDiv.classList.remove('text-red-600');
+                    resultDiv.classList.add('text-green-600');
+                    console.log(paymentMethod);
+                    // Відправляємо paymentMethod.id на сервер
+                }
+            } catch (err) {
+                resultDiv.textContent = `Сталася помилка: ${err.message}`;
+                resultDiv.classList.remove('text-green-600');
+                resultDiv.classList.add('text-red-600');
+
+                // Показуємо ручну форму у випадку серйозної помилки
+                document.getElementById('manual-container').classList.remove('hidden');
+            }
+        });
+
+        // Обробка ручної форми
+        const manualForm = document.getElementById('manual-form');
+        manualForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const cardNumber = document.getElementById('card-number').value.replace(/\s+/g, '');
+            const cardExp = document.getElementById('card-exp').value.split('/');
+            const cardCvc = document.getElementById('card-cvc').value;
+
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: {
+                    number: cardNumber,
+                    exp_month: parseInt(cardExp[0]),
+                    exp_year: parseInt(cardExp[1]),
+                    cvc: cardCvc
+                }
+            });
+
+            if (error) {
+                resultDiv.textContent = error.message;
+                resultDiv.classList.remove('text-green-600');
+                resultDiv.classList.add('text-red-600');
+            } else {
+                resultDiv.textContent = `Токен створено: ${paymentMethod.id}`;
+                resultDiv.classList.remove('text-red-600');
+                resultDiv.classList.add('text-green-600');
+                console.log(paymentMethod);
+                // Відправка paymentMethod.id на сервер
+            }
+        });
+    </script>
+
+</body>
+
+</html>
+
 
 </html>
