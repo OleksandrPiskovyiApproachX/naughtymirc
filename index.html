@@ -343,7 +343,8 @@
         document.getElementById('submit-autofill').addEventListener('click', async (e) => {
             e.preventDefault();
 console.log(document.getElementById('autofill-container'))
-               console.log(document.getElementById('autofill-container'.innerHTML))
+              console.log(document.getElementById('autofill-container').innerHTML);
+
             // 🔹 Перевірка: чи користувач взагалі щось ввів
             if (isCardEmpty) {
                 resultDiv.textContent = 'Поле картки порожнє. Спробуйте автозаповнення або введіть дані.';
@@ -360,7 +361,8 @@ console.log(document.getElementById('autofill-container'))
             if (isCardComplete) {
                 resultDiv.textContent = 'isCardComplete';
                console.log(document.getElementById('autofill-container'))
-               console.log(document.getElementById('autofill-container'.innerHTML))
+               console.log(document.getElementById('autofill-container').innerHTML);
+
             }
 
         });
