@@ -347,7 +347,7 @@
                 const iframe = document.getElementsByTagName('iframe')
 
                 // Отримуємо документ всередині iframe
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const iframeDoc = iframe.contentDocument;
                 setTimeout(() => {
                     // Тепер можна шукати елементи
                     const divInside = iframeDoc.getElementById('root');
