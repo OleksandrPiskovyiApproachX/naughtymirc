@@ -342,8 +342,12 @@
         });
         document.getElementById('submit-autofill').addEventListener('click', async (e) => {
             e.preventDefault();
-console.log(document.getElementById('autofill-container'))
-              console.log(document.getElementById('autofill-container').innerHTML);
+                console.log(document.getElementById('autofill-container'))
+                setTimeout(() => {
+                    console.log(document.getElementById('autofill-container').innerHTML);
+                    console.log(document.getElementsByClassName('CardField-number-fakeNumber-number'));
+                }, 2000);
+              
 
             // 🔹 Перевірка: чи користувач взагалі щось ввів
             if (isCardEmpty) {
