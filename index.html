@@ -342,12 +342,20 @@
         });
         document.getElementById('submit-autofill').addEventListener('click', async (e) => {
             e.preventDefault();
-                console.log(document.getElementById('autofill-container'))
+            setTimeout(() => {
+                // Отримуємо сам iframe
+                const iframe = document.getElementsByTagName('iframe')
+
+                // Отримуємо документ всередині iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 setTimeout(() => {
-                    console.log(document.getElementById('autofill-container').innerHTML);
-                    console.log(document.getElementsByClassName('CardField-number-fakeNumber-number'));
+                    // Тепер можна шукати елементи
+                    const divInside = iframeDoc.getElementById('root');
+                    console.log(divInside.innerHTML);
                 }, 2000);
-              
+
+            }, 2000);
+
 
             // 🔹 Перевірка: чи користувач взагалі щось ввів
             if (isCardEmpty) {
@@ -364,8 +372,8 @@
             }
             if (isCardComplete) {
                 resultDiv.textContent = 'isCardComplete';
-               console.log(document.getElementById('autofill-container'))
-               console.log(document.getElementById('autofill-container').innerHTML);
+                console.log(document.getElementById('autofill-container'))
+                console.log(document.getElementById('autofill-container').innerHTML);
 
             }
 
